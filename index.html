@@ -3,16 +3,18 @@
 	<body></body>
 </html>
 <style type="text/css">
+	body{font-size: 14px;}
 	label{
 		width: 10%;
 		display: inline-block;
 	}
 	div#table{
 		min-width: 640px;
+		white-space: pre;
 		width: 70%;
 		z-index: 1000;
 		position: fixed;
-		background-color: gray;
+		background-color: #e6e6e6;;
 		right: -70%;
 		top: 0;
 		min-height: 100%;
@@ -32,18 +34,23 @@
 		transition-property: right;
 		transition-duration: 1s;
 	}
-	div#side.active, div#table.active{
+	div#side.active, div#table.active, div#side:hover{
 		right: 0;
 	}
+	div#side div{padding-left:20px;}
 	div#startButton{
+		cursor: pointer;
 		position: relative;
 		left: 50%;
-		background-color: green;
-		border: 1px solid black;
+		background-color: #7be67b;
+		border: 3px solid #8af2cd;
 		border-radius: 10px;
 		display: inline-block;
 		font-size: 20pt;
+		transition-property: left;
+		transition-duration: 1s;
 	}
+	div#startButton.active{left: 12.5%;}
 </style>
 <script>
 	var mainframe = document.createElement('div');
@@ -59,14 +66,16 @@
 	}
 	function buildForm(){
 		mainframe.formElement = create('div', mainframe, {id: 'form'});
+		mainframe.tableElement = create('div', mainframe, {id: 'table'});
 
-		create('div', mainframe.formElement, {}, '<label>Years: </label><input name="years" />');
-		create('div', mainframe.formElement, {}, '<label>Monthly withdraw: </label><input name="earn" />');
-		create('div', mainframe.formElement, {}, '<label>Interest: </label><input name="interest" />');
-		create('div', mainframe.formElement, {}, '<label>Start withdraw: </label><input name="total" />');
-		create('div', mainframe.formElement, {id: 'startButton', onclick: function(){mainframe.tableElement.classList.toggle('active');mainframe.sideElement.classList.toggle('active'); alert('GO');}}, 'GO!');
-
-		create('div', mainframe.formElement, {onclick: function(){mainframe.tableElement.classList.toggle('active');mainframe.sideElement.classList.toggle('active'); alert('GO');}}, 'GO!');
+		create('div', mainframe.formElement, {}, '<label>Years: </label><input type="input" name="years" />');
+		create('div', mainframe.formElement, {}, '<label>Monthly withdraw: </label><input type="input" name="earn" />');
+		create('div', mainframe.formElement, {}, '<label>Interest: </label><input type="input" name="interest" />');
+		create('div', mainframe.formElement, {}, '<label>Start withdraw: </label><input type="input" name="total" />');
+		create('div', mainframe.formElement, {id: 'startButton', onclick: function(){
+			makeCalculation();
+			this.classList.toggle('active');
+		}}, 'GO!');
 	}
 	function sideMenu(){
 		//todo: constant 400000, 52000, 13%, period of interests 
@@ -75,15 +84,20 @@
 		create('div', mainframe.sideElement, {}, 'Max. of interest: 52.000');
 		create('div', mainframe.sideElement, {}, 'Current interest percent: 13%');
 		create('div', mainframe.sideElement, {}, 'Current coupon period: 6 months');
+		create('div', mainframe.sideElement, {}, 'Current broker\'s fee: 177');
 	}
 	function applyStyles(){}
 	function makeCalculation(){
-		mainframe.tableElement = create('div', mainframe, {id: 'table'});
-		var years = 3,
-		earn = 3500,
-		interest = 7.64,
+		mainframe.tableElement.classList.toggle('active');
+		if(!mainframe.tableElement.classList.contains('active')) return mainframe.tableElement.innerHTML = '';
+		var inputs = document.getElementsByTagName('input'),
+		params = [];
+		for(var i = 0; i<inputs.length; i++) params[inputs[i].name] = (inputs[i].name == 'interest'?parseFloat(inputs[i].value):parseInt(inputs[i].value));
+		var years = params['years'],//3,
+		earn = params['earn'],//3500,
+		interest = params['interest'],//7.64,
 		interest2 = 13,
-		total = 0,
+		total = params['total'],//0,
 		withdraw = 0,
 		fee = 177,
 		totalfee = 0,
@@ -94,16 +108,16 @@
 		if(total>0) withdraw = total;
 		for(i = 0; i<years*2; i++){
 			for(j = 0; j<6; j++){
-				html+=(i*6+j+1)+' J)	'+Math.round(total)+" + "+(earn-fee)+" = "+Math.round(total+earn-fee)+"\r\n";
+				html+=(i*6+j+1)+' withdraw)	'+Math.round(total)+" + "+(earn-fee)+" = "+Math.round(total+earn-fee)+"\r\n";
 				total+=earn-fee;
 				withdraw+=earn;
 				totalfee+=fee;
 			}
-			html+=(i*6+j)+' I)	'+Math.round(total)+" + "+Math.round(total*(interest/100))+"("+(interest)+")%\r\n";
+			html+=(i*6+j)+' interest)	'+Math.round(total)+" + "+Math.round(total*(interest/100))+"("+(interest)+")%\r\n";
 			totalinterest+=total*(interest/100);
 			total=total*(1+interest/100);
 			if(i%2==1) {
-				html+=((i+1)/2)+' Y)	'+Math.round(total)+" + "+(withdraw>400000?52000:withdraw*(interest2/100))+"("+(interest2)+")%\r\n";
+				html+=((i+1)/2)+' annual interest)	'+Math.round(total)+" + "+(withdraw>400000?52000:withdraw*(interest2/100))+"("+(interest2)+")%\r\n";
 				total+=withdraw*(interest2/100);
 				totaltaxback+=(withdraw>400000?52000:withdraw*(interest2/100));
 				withdraw = 0;
@@ -117,6 +131,5 @@
 		mainframe.tableElement.innerHTML += html;
 	}
 	buildForm();
-	makeCalculation();
 	sideMenu();
 </script>
