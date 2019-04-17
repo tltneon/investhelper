@@ -1,1 +1,122 @@
-<html><body>Something to add</body></html>
+<html>
+	<head><meta charset="utf-8"></head>
+	<body></body>
+</html>
+<style type="text/css">
+	label{
+		width: 10%;
+		display: inline-block;
+	}
+	div#table{
+		min-width: 640px;
+		width: 70%;
+		z-index: 1000;
+		position: fixed;
+		background-color: gray;
+		right: -70%;
+		top: 0;
+		min-height: 100%;
+		transition-property: right;
+		transition-duration: 1s;
+	}
+	div#side{
+		color: white;
+		min-width: 350px;
+		width: 350px;
+		z-index: 1100;
+		position: fixed;
+		background-color: black;
+		right: -330;
+		top: 0;
+		min-height: 100%;
+		transition-property: right;
+		transition-duration: 1s;
+	}
+	div#side.active, div#table.active{
+		right: 0;
+	}
+	div#startButton{
+		position: relative;
+		left: 50%;
+		background-color: green;
+		border: 1px solid black;
+		border-radius: 10px;
+		display: inline-block;
+		font-size: 20pt;
+	}
+</style>
+<script>
+	var mainframe = document.createElement('div');
+	mainframe.id = 'app';
+	document.body.appendChild(mainframe);
+
+	function create(tag, parent, data, content){
+		var el = document.createElement(tag);
+		for(var d in data) el[d] = data[d];
+		if(parent) parent.appendChild(el);
+		if(content) el.innerHTML = content;
+		return el;
+	}
+	function buildForm(){
+		mainframe.formElement = create('div', mainframe, {id: 'form'});
+
+		create('div', mainframe.formElement, {}, '<label>Years: </label><input name="years" />');
+		create('div', mainframe.formElement, {}, '<label>Monthly withdraw: </label><input name="earn" />');
+		create('div', mainframe.formElement, {}, '<label>Interest: </label><input name="interest" />');
+		create('div', mainframe.formElement, {}, '<label>Start withdraw: </label><input name="total" />');
+		create('div', mainframe.formElement, {id: 'startButton', onclick: function(){mainframe.tableElement.classList.toggle('active');mainframe.sideElement.classList.toggle('active'); alert('GO');}}, 'GO!');
+
+		create('div', mainframe.formElement, {onclick: function(){mainframe.tableElement.classList.toggle('active');mainframe.sideElement.classList.toggle('active'); alert('GO');}}, 'GO!');
+	}
+	function sideMenu(){
+		//todo: constant 400000, 52000, 13%, period of interests 
+		mainframe.sideElement = create('div', mainframe, {id: 'side'});
+		create('div', mainframe.sideElement, {}, 'Max. of interest-based withdrawal: 400.000');
+		create('div', mainframe.sideElement, {}, 'Max. of interest: 52.000');
+		create('div', mainframe.sideElement, {}, 'Current interest percent: 13%');
+		create('div', mainframe.sideElement, {}, 'Current coupon period: 6 months');
+	}
+	function applyStyles(){}
+	function makeCalculation(){
+		mainframe.tableElement = create('div', mainframe, {id: 'table'});
+		var years = 3,
+		earn = 3500,
+		interest = 7.64,
+		interest2 = 13,
+		total = 0,
+		withdraw = 0,
+		fee = 177,
+		totalfee = 0,
+		totalinterest = 0,
+		totaltaxback = 0,
+		html = '';
+
+		if(total>0) withdraw = total;
+		for(i = 0; i<years*2; i++){
+			for(j = 0; j<6; j++){
+				html+=(i*6+j+1)+' J)	'+Math.round(total)+" + "+(earn-fee)+" = "+Math.round(total+earn-fee)+"\r\n";
+				total+=earn-fee;
+				withdraw+=earn;
+				totalfee+=fee;
+			}
+			html+=(i*6+j)+' I)	'+Math.round(total)+" + "+Math.round(total*(interest/100))+"("+(interest)+")%\r\n";
+			totalinterest+=total*(interest/100);
+			total=total*(1+interest/100);
+			if(i%2==1) {
+				html+=((i+1)/2)+' Y)	'+Math.round(total)+" + "+(withdraw>400000?52000:withdraw*(interest2/100))+"("+(interest2)+")%\r\n";
+				total+=withdraw*(interest2/100);
+				totaltaxback+=(withdraw>400000?52000:withdraw*(interest2/100));
+				withdraw = 0;
+			}
+		}
+		html+='\nTotal fee: '+totalfee;
+		html+='\nTotal interest: '+Math.round(totalinterest);
+		html+='\nTotal taxback: '+Math.round(totaltaxback);
+		html+='\nDelta income per '+years+' years: '+Math.round(totaltaxback+totalinterest-totalfee)+"\n";
+		html+='\nIf you will not save and will spend all your money, I\'ll have 0 after '+years+' years.\nBut if you will withdraw at least '+earn+' per month with '+interest+' of interest for '+years+' years - you\'ll have a '+Math.round(totaltaxback+totalinterest-totalfee)+" of revenue and "+Math.round(total)+" of savings\r\n";
+		mainframe.tableElement.innerHTML += html;
+	}
+	buildForm();
+	makeCalculation();
+	sideMenu();
+</script>
