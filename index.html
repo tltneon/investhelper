@@ -60,7 +60,7 @@
 	div#form div{
 		padding: 5px;
 	}
-	div#table div{
+	div#table div#content{
 		padding: 5px;
 		overflow: auto;
 		height:100%
@@ -85,7 +85,6 @@
 	var mainframe = document.createElement('div');
 	mainframe.id = 'app';
 	document.body.appendChild(mainframe);
-
 	function create(tag, parent, data, content){
 		var el = document.createElement(tag);
 		for(var d in data) el[d] = data[d];
@@ -96,14 +95,14 @@
 	function buildForm(){
 		mainframe.formElement = create('div', mainframe, {id: 'form'});
 		mainframe.tableElement = create('div', mainframe, {id: 'table'});
-		create('div', mainframe.tableElement);
-
+		create('div', mainframe.tableElement, {id: 'content'});
 		create('h3', mainframe.formElement, {}, 'Utility for calculating "How much you could have"');
+		create('h5', mainframe.formElement, {}, '(if you will buy only government\'s obligations)');
 		create('h4', mainframe.formElement, {}, 'Fill inputs and hit the PROCESS button to start');
-		create('div', mainframe.formElement, {}, '<label>Years: </label><input type="number" name="years" />');
-		create('div', mainframe.formElement, {}, '<label>Monthly withdraw: </label><input type="number" name="earn" />');
-		create('div', mainframe.formElement, {}, '<label>Interest: </label><input type="input" name="interest" />');
-		create('div', mainframe.formElement, {}, '<label>Start withdraw: </label><input type="number" name="total" />');
+		create('div', mainframe.formElement, {}, '<label>Years: </label><input type="number" value="3" name="years" />');
+		create('div', mainframe.formElement, {}, '<label>Monthly withdraw: </label><input type="number" value="3500" name="earn" />');
+		create('div', mainframe.formElement, {}, '<label>Interest: </label><input type="input" value ="7.64" name="interest" />');
+		create('div', mainframe.formElement, {}, '<label>Start withdraw: </label><input type="number" value="0" name="total" />');
 		create('div', mainframe.formElement, {id: 'startButton', onclick: function(){
 			makeCalculation();
 			this.classList.toggle('active');
@@ -137,32 +136,32 @@
 		totalfee = 0,
 		totalinterest = 0,
 		totaltaxback = 0,
-		html = 'Month # |	action	| begin of period	| income	| end of period\r\n';
-
+		html = '<table><tr><th>Month #</th><th>action</th><th>begin of period</th><th>income</th><th>end of period</th><th>| obligations you have</th></tr>';
 		if(total>0) withdraw = total;
 		for(i = 0; i<years*2; i++){
 			for(j = 0; j<6; j++){
-				html+='Month '+(i*6+j+1)+'	withdraw:	'+Math.round(total)+"		+ "+(earn-fee)+"	= "+Math.round(total+earn-fee)+"\r\n";
+				html+='<tr><td>Month '+(i*6+j+1)+'</td><td>withdraw:</td><td>'+Math.round(total)+"</td><td>+ "+(earn-fee)+"</td><td>= "+Math.round(total+earn-fee)+"</td></tr>";
 				total+=earn-fee;
 				withdraw+=earn;
 				totalfee+=fee;
 			}
-			html+='Month '+(i*6+j)+'	interest:	'+Math.round(total)+"		+ "+Math.round(total*(interest/100))+"("+(interest)+")%\r\n";
-			totalinterest+=total*(interest/100);
-			total=total*(1+interest/100);
+			html+='<tr><td>Month '+(i*6+j)+'</td><td>interest:</td><td>'+Math.round(total)+"</td><td>+ "+Math.round(Math.floor(total/1027)*1000*(interest/200))+" ("+(interest)+")%</td><td>= "+Math.round(total+Math.floor(total/1027)*1000*(interest/200))+"</td><td>"+Math.floor(total/1027)+"</td></tr>";
+			totalinterest+=Math.floor(total/1027)*1000*(interest/200);
+			total+=Math.floor(total/1027)*1000*(interest/200);
 			if(i%2==1) {
-				html+=((i+1)/2)+' annual	interest:	'+Math.round(total)+"		+ "+(withdraw>400000?52000:withdraw*(interest2/100))+"("+(interest2)+")%\r\n";
+				html+='<tr><td>'+((i+1)/2)+' annual</td><td>interest:</td><td>'+Math.round(total)+"</td><td>+ "+(withdraw>400000?52000:withdraw*(interest2/100))+" ("+(interest2)+")%</td><td>= "+Math.round(total+(withdraw>400000?52000:withdraw*(interest2/100)))+"</td></tr>";
 				total+=withdraw*(interest2/100);
 				totaltaxback+=(withdraw>400000?52000:withdraw*(interest2/100));
 				withdraw = 0;
 			}
 		}
+		html+='</table>';
 		if(total > 0){
 			html+='\nTotal fee: '+totalfee;
 			html+='\nTotal interest: '+Math.round(totalinterest);
 			html+='\nTotal taxback: '+Math.round(totaltaxback);
 			html+='\nDelta income per '+years+' years: '+Math.round(totaltaxback+totalinterest-totalfee)+"\n";
-			html+='\nIf you will not save and will spend all your money, I\'ll have 0 after '+years+' years.\nBut if you will withdraw at least '+earn+' per month with '+interest+' of interest for '+years+' years - you\'ll have a '+Math.round(totaltaxback+totalinterest-totalfee)+" of revenue and "+Math.round(total)+" of savings\r\n";
+			html+='<div>If you will not save and will spend all your money, I\'ll have 0 after '+years+' years.\nBut if you will withdraw at least '+earn+' per month with '+interest+' of interest for '+years+' years - you\'ll have a '+Math.round(totaltaxback+totalinterest-totalfee)+" of revenue and "+Math.round(total)+" of savings.</div>";
 		}
 		mainframe.tableElement.firstChild.innerHTML += html;
 	}
